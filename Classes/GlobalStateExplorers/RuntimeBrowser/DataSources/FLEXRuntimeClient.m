@@ -303,14 +303,14 @@ static inline NSString * TBWildcardMap(NSString *token, NSString *candidate, TBW
         if (options == TBWildcardOptionsAny) {
             return [[bundles flex_flatmapped:^NSArray *(NSString *bundlePath, NSUInteger idx) {
                 return [self classNamesInImageAtPath:bundlePath];
-            }] flex_sortedUsingSelector:@selector(caseInsensitiveCompare:)];
+            }] sortedUsingSelector:@selector(caseInsensitiveCompare:)];
         }
 
         return [[bundles flex_flatmapped:^NSArray *(NSString *bundlePath, NSUInteger idx) {
             return [[self classNamesInImageAtPath:bundlePath] flex_mapped:^id(NSString *className, NSUInteger idx) {
                 return TBWildcardMap(query, className, options);
             }];
-        }] flex_sortedUsingSelector:@selector(caseInsensitiveCompare:)];
+        }] sortedUsingSelector:@selector(caseInsensitiveCompare:)];
     }
 }
 

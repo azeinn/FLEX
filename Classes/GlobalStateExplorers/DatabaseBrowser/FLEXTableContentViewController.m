@@ -84,8 +84,8 @@
 }
 
 - (CGFloat)multiColumnTableView:(FLEXMultiColumnTableView *)tableView
-    minWidthForContentCellInColumn:(NSInteger)column {
-    return 100;
+    widthForContentCellInColumn:(NSInteger)column {
+    return 120;
 }
 
 - (CGFloat)heightForTopHeaderInTableView:(FLEXMultiColumnTableView *)tableView {
@@ -113,11 +113,7 @@
     
     [FLEXAlert makeAlert:^(FLEXAlert *make) {
         make.title([@"Row " stringByAppendingString:@(row).stringValue]);
-        NSString *message = [fields componentsJoinedByString:@"\n\n"];
-        make.message(message);
-        make.button(@"Copy").handler(^(NSArray<NSString *> *strings) {
-            UIPasteboard.generalPasteboard.string = message;
-        });
+        make.message([fields componentsJoinedByString:@"\n\n"]);
         make.button(@"Dismiss").cancelStyle();
     } showFrom:self];
 }
@@ -127,19 +123,13 @@
                     sortType:(FLEXTableColumnHeaderSortType)sortType {
     
     NSArray<NSArray *> *sortContentData = [self.rows
-        sortedArrayWithOptions:NSSortStable
-        usingComparator:^NSComparisonResult(NSArray *obj1, NSArray *obj2) {
+        sortedArrayUsingComparator:^NSComparisonResult(NSArray *obj1, NSArray *obj2) {
             id a = obj1[column], b = obj2[column];
             if (a == NSNull.null) {
                 return NSOrderedAscending;
             }
             if (b == NSNull.null) {
                 return NSOrderedDescending;
-            }
-        
-            if ([a respondsToSelector:@selector(compare:options:)] &&
-                [b respondsToSelector:@selector(compare:options:)]) {
-                return [a compare:b options:NSNumericSearch];
             }
             
             if ([a respondsToSelector:@selector(compare:)] && [b respondsToSelector:@selector(compare:)]) {

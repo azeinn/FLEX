@@ -3,7 +3,7 @@
 //  Flipboard
 //
 //  Created by Ryan Olson on 2/10/15.
-//  Copyright (c) 2020 FLEX Team. All rights reserved.
+//  Copyright (c) 2020 Flipboard. All rights reserved.
 //
 
 #import "FLEXColor.h"
@@ -64,9 +64,7 @@ typedef UIViewController *(^FLEXNetworkDetailRowSelectionFuture)(void);
         self.toolbarItems = @[
             UIBarButtonItem.flex_flexibleSpace,
             [UIBarButtonItem
-                flex_itemWithTitle:@"Copy curl"
-                target:self
-                action:@selector(copyButtonPressed:)
+                itemWithTitle:@"Copy curl" target:self action:@selector(copyButtonPressed:)
             ]
         ];
     }
@@ -328,23 +326,24 @@ typedef UIViewController *(^FLEXNetworkDetailRowSelectionFuture)(void);
         responseBodyRow.detailText = @"tap to view";
 
         // Avoid a long lived strong reference to the response data in case we need to purge it from the cache.
-        weakify(responseData)
-        responseBodyRow.selectionFuture = ^UIViewController *() { strongify(responseData)
+        __weak NSData *weakResponseData = responseData;
+        responseBodyRow.selectionFuture = ^UIViewController * () {
 
             // Show the response if we can
             NSString *contentType = transaction.response.MIMEType;
-            if (responseData) {
-                UIViewController *bodyDetails = [self detailViewControllerForMIMEType:contentType data:responseData];
-                if (bodyDetails) {
-                    bodyDetails.title = @"Response";
-                    return bodyDetails;
+            NSData *strongResponseData = weakResponseData;
+            if (strongResponseData) {
+                UIViewController *bodyDetailController = [self detailViewControllerForMIMEType:contentType data:strongResponseData];
+                if (bodyDetailController) {
+                    bodyDetailController.title = @"Response";
+                    return bodyDetailController;
                 }
             }
 
             // We can't show the response, alert user
             return [FLEXAlert makeAlert:^(FLEXAlert *make) {
                 make.title(@"Unable to View Response");
-                if (responseData) {
+                if (strongResponseData) {
                     make.message(@"No viewer content type: ").message(contentType);
                 } else {
                     make.message(@"The response has been purged from the cache");
@@ -425,8 +424,7 @@ typedef UIViewController *(^FLEXNetworkDetailRowSelectionFuture)(void);
     if (transaction.cachedRequestBody.length > 0) {
         NSString *contentType = [transaction.request valueForHTTPHeaderField:@"Content-Type"];
         if ([contentType hasPrefix:@"application/x-www-form-urlencoded"]) {
-            NSData *body = [self postBodyDataForTransaction:transaction];
-            NSString *bodyString = [[NSString alloc] initWithData:body encoding:NSUTF8StringEncoding];
+            NSString *bodyString = [NSString stringWithCString:[self postBodyDataForTransaction:transaction].bytes encoding:NSUTF8StringEncoding];
             postBodySection.rows = [self networkDetailRowsFromQueryItems:[FLEXUtility itemsFromQueryString:bodyString]];
         }
     }

@@ -3,7 +3,7 @@
 //  Flipboard
 //
 //  Created by Ryan Olson on 6/8/14.
-//  Copyright (c) 2020 FLEX Team. All rights reserved.
+//  Copyright (c) 2020 Flipboard. All rights reserved.
 //
 
 #import <UIKit/UIKit.h>
@@ -11,7 +11,12 @@
 #import "FLEXObjcInternal.h"
 #import "FLEXTypeEncodingParser.h"
 
-NSString * const FLEXRuntimeUtilityErrorDomain = @"FLEXRuntimeUtilityErrorDomain";
+static NSString *const FLEXRuntimeUtilityErrorDomain = @"FLEXRuntimeUtilityErrorDomain";
+typedef NS_ENUM(NSInteger, FLEXRuntimeUtilityErrorCode) {
+    FLEXRuntimeUtilityErrorCodeDoesNotRecognizeSelector = 0,
+    FLEXRuntimeUtilityErrorCodeInvocationFailed = 1,
+    FLEXRuntimeUtilityErrorCodeArgumentTypeMismatch = 2
+};
 
 @implementation FLEXRuntimeUtility
 
@@ -91,24 +96,12 @@ NSString * const FLEXRuntimeUtilityErrorDomain = @"FLEXRuntimeUtilityErrorDomain
     return superClasses;
 }
 
-+ (NSString *)safeClassNameForObject:(id)object {
-    // Don't assume that we have an NSObject subclass
-    if ([self safeObject:object respondsToSelector:@selector(class)]) {
-        return NSStringFromClass([object class]);
-    }
-
-    return NSStringFromClass(object_getClass(object));
-}
-
 /// Could be nil
 + (NSString *)safeDescriptionForObject:(id)object {
-    // Don't assume that we have an NSObject subclass; not all objects respond to -description
-    if ([self safeObject:object respondsToSelector:@selector(description)]) {
-        @try {
-            return [object description];
-        } @catch (NSException *exception) {
-            return nil;
-        }
+    // Don't assume that we have an NSObject subclass.
+    // Check to make sure the object responds to the description method
+    if ([object respondsToSelector:@selector(description)]) {
+        return [object description];
     }
 
     return nil;
@@ -118,10 +111,10 @@ NSString * const FLEXRuntimeUtilityErrorDomain = @"FLEXRuntimeUtilityErrorDomain
 + (NSString *)safeDebugDescriptionForObject:(id)object {
     NSString *description = nil;
 
-    if ([self safeObject:object respondsToSelector:@selector(debugDescription)]) {
-        @try {
-            description = [object debugDescription];
-        } @catch (NSException *exception) { }
+    // Don't assume that we have an NSObject subclass.
+    // Check to make sure the object responds to the description method
+    if ([object respondsToSelector:@selector(debugDescription)]) {
+        description = [object debugDescription];
     } else {
         description = [self safeDescriptionForObject:object];
     }
@@ -142,7 +135,7 @@ NSString * const FLEXRuntimeUtilityErrorDomain = @"FLEXRuntimeUtilityErrorDomain
     NSString *description = nil;
 
     // Special case BOOL for better readability.
-    if ([self safeObject:value isKindOfClass:[NSValue class]]) {
+    if ([value isKindOfClass:[NSValue class]]) {
         const char *type = [value objCType];
         if (strcmp(type, @encode(BOOL)) == 0) {
             BOOL boolValue = NO;
@@ -168,34 +161,6 @@ NSString * const FLEXRuntimeUtilityErrorDomain = @"FLEXRuntimeUtilityErrorDomain
     }
 
     return description;
-}
-
-+ (BOOL)safeObject:(id)object isKindOfClass:(Class)cls {
-    static BOOL (*isKindOfClass)(id, SEL, Class) = nil;
-    static BOOL (*isKindOfClass_meta)(id, SEL, Class) = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        isKindOfClass = (BOOL(*)(id, SEL, Class))[NSObject instanceMethodForSelector:@selector(isKindOfClass:)];
-        isKindOfClass_meta = (BOOL(*)(id, SEL, Class))[NSObject methodForSelector:@selector(isKindOfClass:)];
-    });
-    
-    BOOL isClass = object_isClass(object);
-    return (isClass ? isKindOfClass_meta : isKindOfClass)(object, @selector(isKindOfClass:), cls);
-}
-
-+ (BOOL)safeObject:(id)object respondsToSelector:(SEL)sel {
-    // If we're given a class, we want to know if classes respond to this selector.
-    // Similarly, if we're given an instance, we want to know if instances respond. 
-    BOOL isClass = object_isClass(object);
-    Class cls = isClass ? object : object_getClass(object);
-    // BOOL isMetaclass = class_isMetaClass(cls);
-    
-    if (isClass) {
-        // In theory, this should also work for metaclasses...
-        return class_getClassMethod(cls, sel) != nil;
-    } else {
-        return class_getInstanceMethod(cls, sel) != nil;
-    }
 }
 
 
@@ -295,31 +260,18 @@ NSString * const FLEXRuntimeUtilityErrorDomain = @"FLEXRuntimeUtilityErrorDomain
              onObject:(id)object
         withArguments:(NSArray *)arguments
                 error:(NSError * __autoreleasing *)error {
-    return [self performSelector:selector
-        onObject:object
-        withArguments:arguments
-        allowForwarding:NO
-        error:error
-    ];
-}
-
-+ (id)performSelector:(SEL)selector
-             onObject:(id)object
-        withArguments:(NSArray *)arguments
-      allowForwarding:(BOOL)mightForwardMsgSend
-                error:(NSError * __autoreleasing *)error {
     static dispatch_once_t onceToken;
     static SEL stdStringExclusion = nil;
     dispatch_once(&onceToken, ^{
         stdStringExclusion = NSSelectorFromString(@"stdString");
     });
 
-    // Bail if the object won't respond to this selector
-    if (mightForwardMsgSend || ![self safeObject:object respondsToSelector:selector]) {
+    // Bail if the object won't respond to this selector.
+    if (![object respondsToSelector:selector]) {
         if (error) {
             NSString *msg = [NSString
-                stringWithFormat:@"This object does not respond to the selector %@",
-                NSStringFromSelector(selector)
+                stringWithFormat:@"%@ does not respond to the selector %@",
+                object, NSStringFromSelector(selector)
             ];
             NSDictionary<NSString *, id> *userInfo = @{ NSLocalizedDescriptionKey : msg };
             *error = [NSError

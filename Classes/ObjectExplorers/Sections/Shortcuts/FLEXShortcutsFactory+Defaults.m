@@ -3,46 +3,19 @@
 //  FLEX
 //
 //  Created by Tanner Bennett on 8/29/19.
-//  Copyright © 2020 FLEX Team. All rights reserved.
+//  Copyright © 2019 Flipboard. All rights reserved.
 //
 
 #import "FLEXShortcutsFactory+Defaults.h"
 #import "FLEXShortcut.h"
-#import "FLEXMacros.h"
 #import "FLEXRuntimeUtility.h"
 #import "NSObject+FLEX_Reflection.h"
-#import "Cocoa+FLEXShortcuts.h"
-
-#pragma mark - UIApplication
-
-@implementation FLEXShortcutsFactory (UIApplication)
-
-+ (void)load { FLEX_EXIT_IF_NO_CTORS()
-    // sharedApplication class property possibly not added
-    // as a literal class property until iOS 10
-    FLEXRuntimeUtilityTryAddObjectProperty(
-        2, sharedApplication, UIApplication.flex_metaclass, UIApplication, PropertyKey(ReadOnly)
-    );
-    
-    self.append.classProperties(@[@"sharedApplication"]).forClass(UIApplication.flex_metaclass);
-    self.append.properties(@[
-        @"delegate", @"keyWindow", @"windows"
-    ]).forClass(UIApplication.class);
-
-    if (@available(iOS 13, *)) {
-        self.append.properties(@[
-            @"connectedScenes", @"openSessions", @"supportsMultipleScenes"
-        ]).forClass(UIApplication.class);
-    }
-}
-
-@end
 
 #pragma mark - Views
 
 @implementation FLEXShortcutsFactory (Views)
 
-+ (void)load { FLEX_EXIT_IF_NO_CTORS()
++ (void)load { FLEX_EXIT_IF_TESTING()
     // A quirk of UIView and some other classes: a lot of the `@property`s are
     // not actually properties from the perspective of the runtime.
     //
@@ -61,7 +34,6 @@
     FLEXRuntimeUtilityTryAddObjectProperty(6, constraints, UIView_, NSArray, PropertyKey(ReadOnly));
     FLEXRuntimeUtilityTryAddObjectProperty(2, subviews, UIView_, NSArray, PropertyKey(ReadOnly));
     FLEXRuntimeUtilityTryAddObjectProperty(2, superview, UIView_, UIView, PropertyKey(ReadOnly));
-    FLEXRuntimeUtilityTryAddObjectProperty(7, tintColor, UIView_, UIView);
 
     // UIButton, private
     FLEXRuntimeUtilityTryAddObjectProperty(2, font, UIButton.class, UIFont, PropertyKey(ReadOnly));
@@ -134,7 +106,7 @@
 
 @implementation FLEXShortcutsFactory (ViewControllers)
 
-+ (void)load { FLEX_EXIT_IF_NO_CTORS()
++ (void)load { FLEX_EXIT_IF_TESTING()
     // toolbarItems is not really a property, make it one 
     FLEXRuntimeUtilityTryAddObjectProperty(3, toolbarItems, UIViewController.class, NSArray);
     
@@ -144,26 +116,7 @@
             @"viewIfLoaded", @"title", @"navigationItem", @"toolbarItems", @"tabBarItem",
             @"childViewControllers", @"navigationController", @"tabBarController", @"splitViewController",
             @"parentViewController", @"presentedViewController", @"presentingViewController",
-        ])
-        .methods(@[@"view"])
-        .forClass(UIViewController.class);
-    
-    // UIAlertController
-    NSMutableArray *alertControllerProps = @[
-        @"title", @"message", @"actions", @"textFields",
-        @"preferredAction", @"presentingViewController", @"viewIfLoaded",
-    ].mutableCopy;
-    if (@available(iOS 14.0, *)) {
-        [alertControllerProps insertObject:@"image" atIndex:4];
-    }
-    self.append
-        .properties(alertControllerProps)
-        .methods(@[@"addAction:"])
-        .forClass(UIAlertController.class);
-    self.append.properties(@[
-        @"title", @"style", @"enabled", @"flex_styleName",
-        @"image", @"keyCommandInput", @"_isPreferred", @"_alertController",
-    ]).forClass(UIAlertAction.class);
+        ]).methods(@[@"view"]).forClass(UIViewController.class);
 }
 
 @end
@@ -173,7 +126,7 @@
 
 @implementation FLEXShortcutsFactory (UIImage)
 
-+ (void)load { FLEX_EXIT_IF_NO_CTORS()
++ (void)load { FLEX_EXIT_IF_TESTING()
     self.append.methods(@[
         @"CGImage", @"CIImage"
     ]).properties(@[
@@ -182,7 +135,7 @@
     ]).forClass(UIImage.class);
 
     if (@available(iOS 13, *)) {
-        self.append.properties(@[@"symbolImage"]).forClass(UIImage.class);
+        self.append.properties(@[@"symbolImage"]);
     }
 }
 
@@ -193,7 +146,7 @@
 
 @implementation FLEXShortcutsFactory (NSBundle)
 
-+ (void)load { FLEX_EXIT_IF_NO_CTORS()
++ (void)load { FLEX_EXIT_IF_TESTING()
     self.append.properties(@[
         @"bundleIdentifier", @"principalClass",
         @"infoDictionary", @"bundlePath",
@@ -208,7 +161,7 @@
 
 @implementation FLEXShortcutsFactory (Classes)
 
-+ (void)load { FLEX_EXIT_IF_NO_CTORS()
++ (void)load { FLEX_EXIT_IF_TESTING()
     self.append.classMethods(@[@"new", @"alloc"]).forClass(NSObject.flex_metaclass);
 }
 
@@ -219,7 +172,7 @@
 
 @implementation FLEXShortcutsFactory (Activities)
 
-+ (void)load { FLEX_EXIT_IF_NO_CTORS()
++ (void)load { FLEX_EXIT_IF_TESTING()
     // Property was added in iOS 10 but we want it on iOS 9 too
     FLEXRuntimeUtilityTryAddNonatomicProperty(9, item, UIActivityItemProvider.class, id, PropertyKey(ReadOnly));
     
@@ -239,7 +192,7 @@
 
 @implementation FLEXShortcutsFactory (Blocks)
 
-+ (void)load { FLEX_EXIT_IF_NO_CTORS()
++ (void)load { FLEX_EXIT_IF_TESTING()
     self.append.methods(@[@"invoke"]).forClass(NSClassFromString(@"NSBlock"));
 }
 
@@ -249,7 +202,7 @@
 
 @implementation FLEXShortcutsFactory (Foundation)
 
-+ (void)load { FLEX_EXIT_IF_NO_CTORS()
++ (void)load { FLEX_EXIT_IF_TESTING()
     self.append.properties(@[
         @"configuration", @"delegate", @"delegateQueue", @"sessionDescription",
     ]).methods(@[
@@ -278,18 +231,30 @@
     FLEXRuntimeUtilityTryAddObjectProperty(2, abbreviationDictionary, NSTimeZone.flex_metaclass, NSDictionary);
     
     self.append.classMethods(@[
-        @"timeZoneWithName:", @"timeZoneWithAbbreviation:", @"timeZoneForSecondsFromGMT:",
+        @"timeZoneWithName:", @"timeZoneWithAbbreviation:", @"timeZoneForSecondsFromGMT:", @"", @"", @"", 
     ]).forClass(NSTimeZone.flex_metaclass);
     
     self.append.classProperties(@[
         @"defaultTimeZone", @"systemTimeZone", @"localTimeZone"
     ]).forClass(NSTimeZone.class);
     
-    // UTF8String is not a real property under the hood
-    FLEXRuntimeUtilityTryAddNonatomicProperty(2, UTF8String, NSString.class, const char *, PropertyKey(ReadOnly));
     
-    self.append.properties(@[@"length"]).methods(@[@"characterAtIndex:"]).forClass(NSString.class);
-    self.append.properties(@[@"length", @"bytes"]).forClass(NSData.class);
+//    self.append.<#type#>(@[@"<#value#>"]).forClass(NSURLSession.class);
+//    
+//    
+//    self.append.<#type#>(@[@"<#value#>"]).forClass(NSURLSession.class);
+//    
+//    
+//    self.append.<#type#>(@[@"<#value#>"]).forClass(NSURLSession.class);
+//    
+//    
+//    self.append.<#type#>(@[@"<#value#>"]).forClass(NSURLSession.class);
+//    
+//    
+//    self.append.<#type#>(@[@"<#value#>"]).forClass(NSURLSession.class);
+//    
+//    
+//    self.append.<#type#>(@[@"<#value#>"]).forClass(NSURLSession.class);
 }
 
 @end

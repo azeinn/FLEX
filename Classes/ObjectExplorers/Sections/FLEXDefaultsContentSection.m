@@ -3,17 +3,15 @@
 //  FLEX
 //
 //  Created by Tanner Bennett on 8/28/19.
-//  Copyright © 2020 FLEX Team. All rights reserved.
+//  Copyright © 2019 Flipboard. All rights reserved.
 //
 
 #import "FLEXDefaultsContentSection.h"
-#import "FLEXDefaultEditorViewController.h"
-#import "FLEXUtility.h"
 
 @interface FLEXDefaultsContentSection ()
 @property (nonatomic) NSUserDefaults *defaults;
 @property (nonatomic) NSArray *keys;
-@property (nonatomic, readonly) NSDictionary *unexcludedDefaults;
+@property (nonatomic, readonly) NSDictionary *whitelistedDefaults;
 @end
 
 @implementation FLEXDefaultsContentSection
@@ -33,7 +31,7 @@
     FLEXDefaultsContentSection *section = [self forReusableFuture:^id(FLEXDefaultsContentSection *section) {
         section.defaults = userDefaults;
         section.onlyShowKeysForAppPrefs = YES;
-        return section.unexcludedDefaults;
+        return section.whitelistedDefaults;
     }];
     return section;
 }
@@ -42,27 +40,6 @@
 
 - (NSString *)title {
     return @"Defaults";
-}
-
-- (void (^)(__kindof UIViewController *))didPressInfoButtonAction:(NSInteger)row {
-    return ^(UIViewController *host) {
-        if ([FLEXDefaultEditorViewController canEditDefaultWithValue:[self objectForRow:row]]) {
-            // We use titleForRow: to get the key because self.keys is not
-            // necessarily in the same order as the keys being displayed
-            FLEXVariableEditorViewController *controller = [FLEXDefaultEditorViewController
-                target:self.defaults key:[self titleForRow:row] commitHandler:^{
-                    [self reloadData:YES];
-                }
-            ];
-            [host.navigationController pushViewController:controller animated:YES];
-        } else {
-            [FLEXAlert showAlert:@"Oh No…" message:@"We can't edit this entry :(" from:host];
-        }
-    };
-}
-
-- (UITableViewCellAccessoryType)accessoryTypeForRow:(NSInteger)row {
-    return UITableViewCellAccessoryDetailDisclosureButton;
 }
 
 #pragma mark - Private
@@ -87,16 +64,16 @@
     _keys = [keys sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
 }
 
-- (NSDictionary *)unexcludedDefaults {
-    // Case: no excluding
+- (NSDictionary *)whitelistedDefaults {
+    // Case: no whitelisting
     if (!self.onlyShowKeysForAppPrefs) {
         return self.defaults.dictionaryRepresentation;
     }
 
-    // Always regenerate key allowlist when this method is called
+    // Always regenerate key whitelist when this method is called
     _keys = nil;
 
-    // Generate new dictionary from unexcluded keys
+    // Generate new dictionary from whitelisted keys
     NSArray *values = [self.defaults.dictionaryRepresentation
         objectsForKeys:self.keys notFoundMarker:NSNull.null
     ];

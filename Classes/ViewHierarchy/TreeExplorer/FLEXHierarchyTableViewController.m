@@ -3,12 +3,11 @@
 //  Flipboard
 //
 //  Created by Ryan Olson on 2014-05-01.
-//  Copyright (c) 2020 FLEX Team. All rights reserved.
+//  Copyright (c) 2020 Flipboard. All rights reserved.
 //
 
 #import "FLEXColor.h"
 #import "FLEXHierarchyTableViewController.h"
-#import "NSMapTable+FLEX_Subscripting.h"
 #import "FLEXUtility.h"
 #import "FLEXHierarchyTableViewCell.h"
 #import "FLEXObjectExplorerViewController.h"
@@ -199,7 +198,7 @@ typedef NS_ENUM(NSUInteger, FLEXHierarchyScope) {
     
     // If the search bar text field is active, don't scroll on selection because we may want
     // to continue typing. Otherwise, scroll so that the selected cell is visible.
-    if (!self.searchController.searchBar.isFirstResponder) {
+    if (self.searchController.searchBar.isFirstResponder) {
         [self trySelectCellForSelectedView];
     }
 }

@@ -28,8 +28,7 @@
     }
 
     if (request.HTTPBody) {
-        NSString *body = [[NSString alloc] initWithData:request.HTTPBody encoding:NSUTF8StringEncoding];
-        [curlCommandString appendFormat:@"-d \'%@\'", body];
+            [curlCommandString appendFormat:@"-d \'%@\'", [NSString stringWithCString:request.HTTPBody.bytes encoding:NSUTF8StringEncoding]];
     }
 
     return curlCommandString;

@@ -3,7 +3,7 @@
 //  FLEX
 //
 //  Created by Tanner on 3/10/20.
-//  Copyright © 2020 FLEX Team. All rights reserved.
+//  Copyright © 2020 Flipboard. All rights reserved.
 //
 
 #import "NSUserDefaults+FLEX.h"
@@ -12,10 +12,9 @@ NSString * const kFLEXDefaultsToolbarTopMarginKey = @"com.flex.FLEXToolbar.topMa
 NSString * const kFLEXDefaultsiOSPersistentOSLogKey = @"com.flipborad.flex.enable_persistent_os_log";
 NSString * const kFLEXDefaultsHidePropertyIvarsKey = @"com.flipboard.FLEX.hide_property_ivars";
 NSString * const kFLEXDefaultsHidePropertyMethodsKey = @"com.flipboard.FLEX.hide_property_methods";
-NSString * const kFLEXDefaultsHidePrivateMethodsKey = @"com.flipboard.FLEX.hide_private_or_namespaced_methods";
-NSString * const kFLEXDefaultsShowMethodOverridesKey = @"com.flipboard.FLEX.show_method_overrides";
+NSString * const kFLEXDefaultsHideMethodOverridesKey = @"com.flipboard.FLEX.hide_method_overrides";
 NSString * const kFLEXDefaultsHideVariablePreviewsKey = @"com.flipboard.FLEX.hide_variable_previews";
-NSString * const kFLEXDefaultsNetworkHostDenylistKey = @"com.flipboard.FLEX.network_host_denylist";
+NSString * const kFLEXDefaultsNetworkHostBlacklistKey = @"com.flipboard.FLEX.network_host_blacklist";
 NSString * const kFLEXDefaultsDisableOSLogForceASLKey = @"com.flipboard.FLEX.try_disable_os_log";
 NSString * const kFLEXDefaultsRegisterJSONExplorerKey = @"com.flipboard.FLEX.view_json_as_object";
 
@@ -43,7 +42,7 @@ NSString * const kFLEXDefaultsRegisterJSONExplorerKey = @"com.flipboard.FLEX.vie
 
 #pragma mark Helper
 
-- (void)flex_toggleBoolForKey:(NSString *)key {
+- (void)toggleBoolForKey:(NSString *)key {
     [self setBool:![self boolForKey:key] forKey:key];
     [NSNotificationCenter.defaultCenter postNotificationName:key object:nil];
 }
@@ -62,16 +61,16 @@ NSString * const kFLEXDefaultsRegisterJSONExplorerKey = @"com.flipboard.FLEX.vie
     [self setDouble:margin forKey:kFLEXDefaultsToolbarTopMarginKey];
 }
 
-- (NSArray<NSString *> *)flex_networkHostDenylist {
+- (NSArray<NSString *> *)flex_networkHostBlacklist {
     return [NSArray arrayWithContentsOfFile:[
-        self flex_defaultsPathForFile:kFLEXDefaultsNetworkHostDenylistKey
+        self flex_defaultsPathForFile:kFLEXDefaultsNetworkHostBlacklistKey
     ]] ?: @[];
 }
 
-- (void)setFlex_networkHostDenylist:(NSArray<NSString *> *)denylist {
-    NSParameterAssert(denylist);
-    [denylist writeToFile:[
-        self flex_defaultsPathForFile:kFLEXDefaultsNetworkHostDenylistKey
+- (void)setFlex_networkHostBlacklist:(NSArray<NSString *> *)blacklist {
+    NSParameterAssert(blacklist);
+    [blacklist writeToFile:[
+        self flex_defaultsPathForFile:kFLEXDefaultsNetworkHostBlacklistKey
     ] atomically:YES];
 }
 
@@ -131,26 +130,14 @@ NSString * const kFLEXDefaultsRegisterJSONExplorerKey = @"com.flipboard.FLEX.vie
     ];
 }
 
-- (BOOL)flex_explorerHidesPrivateMethods {
-    return [self boolForKey:kFLEXDefaultsHidePrivateMethodsKey];
-}
-
-- (void)setFlex_explorerHidesPrivateMethods:(BOOL)show {
-    [self setBool:show forKey:kFLEXDefaultsHidePrivateMethodsKey];
-    [NSNotificationCenter.defaultCenter
-     postNotificationName:kFLEXDefaultsHidePrivateMethodsKey
-        object:nil
-    ];
-}
-
 - (BOOL)flex_explorerShowsMethodOverrides {
-    return [self boolForKey:kFLEXDefaultsShowMethodOverridesKey];
+    return [self boolForKey:kFLEXDefaultsHideMethodOverridesKey];
 }
 
 - (void)setFlex_explorerShowsMethodOverrides:(BOOL)show {
-    [self setBool:show forKey:kFLEXDefaultsShowMethodOverridesKey];
+    [self setBool:show forKey:kFLEXDefaultsHideMethodOverridesKey];
     [NSNotificationCenter.defaultCenter
-     postNotificationName:kFLEXDefaultsShowMethodOverridesKey
+        postNotificationName:kFLEXDefaultsHideMethodOverridesKey
         object:nil
     ];
 }

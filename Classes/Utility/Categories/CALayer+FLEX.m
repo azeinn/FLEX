@@ -3,7 +3,7 @@
 //  FLEX
 //
 //  Created by Tanner on 2/28/20.
-//  Copyright © 2020 FLEX Team. All rights reserved.
+//  Copyright © 2020 Flipboard. All rights reserved.
 //
 
 #import "CALayer+FLEX.h"
@@ -22,7 +22,7 @@ static BOOL respondsToContinuousCorners = NO;
     ];
 }
 
-- (BOOL)flex_continuousCorners {
+- (BOOL)flexContinuousCorners {
     if (respondsToContinuousCorners) {
         return self.continuousCorners;
     }
@@ -30,7 +30,7 @@ static BOOL respondsToContinuousCorners = NO;
     return NO;
 }
 
-- (void)setFlex_continuousCorners:(BOOL)enabled {
+- (void)setFlexContinuousCorners:(BOOL)enabled {
     if (respondsToContinuousCorners) {
         if (@available(iOS 13, *)) {
             self.cornerCurve = kCACornerCurveContinuous;
